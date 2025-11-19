@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gomoku (五子棋) - Multiplayer</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎮 Gomoku (五子棋)</h1>
+      <p class="subtitle">Five in a Row - Multiplayer Game</p>
+    </header>
+
+    <main>
+      <!-- Menu Screen -->
+      <div id="menu-screen" class="screen active">
+        <div class="menu-content">
+          <h2>Welcome to Gomoku!</h2>
+          <p class="game-info">
+            <strong>Rules:</strong> Players alternate placing stones on a 15×15 board. 
+            The first to get five stones in a row (horizontally, vertically, or diagonally) wins!
+          </p>
+          <div class="menu-buttons">
+            <button id="create-game-btn" class="btn btn-primary">Create New Game</button>
+            <button id="auto-match-btn" class="btn btn-primary">Auto Match</button>
+            <div class="join-game-section">
+              <input type="text" id="game-id-input" placeholder="Enter Game ID" maxlength="9">
+              <button id="join-game-btn" class="btn btn-secondary">Join Game</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Waiting Screen -->
+      <div id="waiting-screen" class="screen">
+        <div class="waiting-content">
+          <h2>Waiting for Opponent...</h2>
+          <div class="spinner"></div>
+          <p>Game ID: <strong id="waiting-game-id"></strong></p>
+          <p class="help-text">Share this ID with a friend to let them join!</p>
+          <button id="cancel-waiting-btn" class="btn btn-secondary">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Game Screen -->
+      <div id="game-screen" class="screen">
+        <div class="game-info-bar">
+          <div class="player-info">
+            <div id="player-black" class="player">
+              <div class="stone stone-black"></div>
+              <span>Black</span>
+              <span id="black-status" class="status"></span>
+            </div>
+            <div id="player-white" class="player">
+              <div class="stone stone-white"></div>
+              <span>White</span>
+              <span id="white-status" class="status"></span>
+            </div>
+          </div>
+          <div class="game-status">
+            <p id="turn-indicator">Black's Turn</p>
+            <p id="game-id-display" class="game-id-small"></p>
+          </div>
+          <button id="leave-game-btn" class="btn btn-danger">Leave Game</button>
+        </div>
+
+        <div class="board-container">
+          <canvas id="game-board" width="600" height="600"></canvas>
+        </div>
+
+        <div id="message-area" class="message-area"></div>
+      </div>
+
+      <!-- Game Over Screen -->
+      <div id="game-over-screen" class="screen">
+        <div class="game-over-content">
+          <h2 id="game-over-title">Game Over!</h2>
+          <p id="game-over-message" class="game-over-message"></p>
+          <button id="play-again-btn" class="btn btn-primary">Play Again</button>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <p>Built with Node.js, Express, and Socket.IO</p>
+    </footer>
+  </div>
+
+  <!-- Socket.IO Client -->
+  <script src="/socket.io/socket.io.js"></script>
+  <!-- Game Logic -->
+  <script src="main.js"></script>
+</body>
+</html>
