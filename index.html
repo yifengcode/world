@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五子棋 - Gomoku</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', 'Microsoft YaHei', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+
+        .game-info {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+
+        .current-player {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .winner {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #28a745;
+            margin-bottom: 10px;
+        }
+
+        .board {
+            display: inline-block;
+            background-color: #daa520;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .board-grid {
+            display: grid;
+            grid-template-columns: repeat(15, 40px);
+            grid-template-rows: repeat(15, 40px);
+            gap: 0;
+            background-color: #cd9e4d;
+            position: relative;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #8b6914;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            background-color: #cd9e4d;
+        }
+
+        .cell:hover:not(.occupied) {
+            background-color: #daa520;
+        }
+
+        .cell.occupied {
+            cursor: not-allowed;
+        }
+
+        .piece {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .piece.black {
+            background: radial-gradient(circle at 30% 30%, #555, #000);
+            border: 1px solid #000;
+        }
+
+        .piece.white {
+            background: radial-gradient(circle at 30% 30%, #fff, #ddd);
+            border: 1px solid #888;
+        }
+
+        .controls {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1em;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .instructions {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            font-size: 0.95em;
+            color: #666;
+        }
+
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .instructions ul {
+            list-style-position: inside;
+            line-height: 1.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 五子棋 Gomoku</h1>
+        
+        <div class="game-info">
+            <div id="currentPlayer" class="current-player">当前玩家: 黑方 ⚫</div>
+            <div id="winner" class="winner" style="display: none;"></div>
+        </div>
+
+        <div class="board">
+            <div id="board" class="board-grid"></div>
+        </div>
+
+        <div class="controls">
+            <button id="resetBtn">重新开始</button>
+        </div>
+
+        <div class="instructions">
+            <h3>游戏规则:</h3>
+            <ul>
+                <li>黑方先行，双方轮流在棋盘交叉点上落子</li>
+                <li>率先在横、竖、斜任一方向形成连续五子者获胜</li>
+                <li>点击"重新开始"可以开始新游戏</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Game constants
+        const BOARD_SIZE = 15;
+        const EMPTY = 0;
+        const BLACK = 1;
+        const WHITE = 2;
+
+        // Game state
+        let board = [];
+        let currentPlayer = BLACK;
+        let gameOver = false;
+
+        // DOM elements
+        const boardElement = document.getElementById('board');
+        const currentPlayerElement = document.getElementById('currentPlayer');
+        const winnerElement = document.getElementById('winner');
+        const resetBtn = document.getElementById('resetBtn');
+
+        // Initialize the game
+        function initGame() {
+            board = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(EMPTY));
+            currentPlayer = BLACK;
+            gameOver = false;
+            
+            boardElement.innerHTML = '';
+            
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    cell.addEventListener('click', handleCellClick);
+                    boardElement.appendChild(cell);
+                }
+            }
+            
+            updateUI();
+        }
+
+        // Handle cell click
+        function handleCellClick(event) {
+            if (gameOver) return;
+            
+            const cell = event.currentTarget;
+            const row = parseInt(cell.dataset.row);
+            const col = parseInt(cell.dataset.col);
+            
+            if (board[row][col] !== EMPTY) return;
+            
+            // Place piece
+            board[row][col] = currentPlayer;
+            
+            // Add piece to UI
+            const piece = document.createElement('div');
+            piece.className = `piece ${currentPlayer === BLACK ? 'black' : 'white'}`;
+            cell.appendChild(piece);
+            cell.classList.add('occupied');
+            
+            // Check for win
+            if (checkWin(row, col)) {
+                gameOver = true;
+                const winner = currentPlayer === BLACK ? '黑方 ⚫' : '白方 ⚪';
+                winnerElement.textContent = `🎉 ${winner} 获胜！`;
+                winnerElement.style.display = 'block';
+                currentPlayerElement.style.display = 'none';
+                return;
+            }
+            
+            // Check for draw (board full)
+            if (isBoardFull()) {
+                gameOver = true;
+                winnerElement.textContent = '🤝 平局！';
+                winnerElement.style.display = 'block';
+                currentPlayerElement.style.display = 'none';
+                return;
+            }
+            
+            // Switch player
+            currentPlayer = currentPlayer === BLACK ? WHITE : BLACK;
+            updateUI();
+        }
+
+        // Check if there's a winner
+        function checkWin(row, col) {
+            const directions = [
+                [[0, 1], [0, -1]],   // Horizontal
+                [[1, 0], [-1, 0]],   // Vertical
+                [[1, 1], [-1, -1]],  // Diagonal \
+                [[1, -1], [-1, 1]]   // Diagonal /
+            ];
+            
+            for (const direction of directions) {
+                let count = 1; // Count the current piece
+                
+                // Check both directions
+                for (const [dr, dc] of direction) {
+                    let r = row + dr;
+                    let c = col + dc;
+                    
+                    while (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE && 
+                           board[r][c] === currentPlayer) {
+                        count++;
+                        r += dr;
+                        c += dc;
+                    }
+                }
+                
+                if (count >= 5) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
+        // Check if board is full
+        function isBoardFull() {
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    if (board[row][col] === EMPTY) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        // Update UI
+        function updateUI() {
+            if (!gameOver) {
+                const playerText = currentPlayer === BLACK ? '黑方 ⚫' : '白方 ⚪';
+                currentPlayerElement.textContent = `当前玩家: ${playerText}`;
+                currentPlayerElement.style.display = 'block';
+                winnerElement.style.display = 'none';
+            }
+        }
+
+        // Reset button handler
+        resetBtn.addEventListener('click', initGame);
+
+        // Start the game
+        initGame();
+    </script>
+</body>
+</html>
